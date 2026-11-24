@@ -1,0 +1,209 @@
+// ============================================================================
+// PulseCorp "Your Wellness, In Bloom" — 100,000+ Concurrent Users Schema
+// PostgreSQL 16 + Time-Series Partitioning + Row-Level HR Privacy Enforcement
+// ============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  EMPLOYEE
+  HR_ADMIN
+}
+
+model User {
+  id                          String   @id @default(uuid())
+  employeeCode                String   @unique @map("employee_code")
+  email                       String   @unique
+  passwordHash                String   @map("password_hash")
+  name                        String
+  roleTitle                   String   @map("role_title")
+  userRole                    UserRole @default(EMPLOYEE) @map("user_role")
+  companyName                 String   @default("Acme Studio") @map("company_name")
+  officeBranch                String   @map("office_branch")
+  department                  String
+  currentStreakDays           Int      @default(7) @map("current_streak_days")
+  readinessScore              Int      @default(92) @map("readiness_score")
+
+  // CRITICAL HR PRIVACY CONSENT FLAGS
+  hrHealthConsent             Boolean  @default(false) @map("hr_health_consent")
+  shareSteps                  Boolean  @default(true)  @map("share_steps")
+  shareHeartRateAndStress     Boolean  @default(false) @map("share_heart_rate_and_stress")
+  shareSleepAndRecovery       Boolean  @default(false) @map("share_sleep_and_recovery")
+
+  createdAt                   DateTime @default(now()) @map("created_at")
+  updatedAt                   DateTime @updatedAt @map("updated_at")
+
+  healthSamples               HealthTelemetrySample[]
+  privacyAuditLogs            PrivacyConsentAuditLog[]
+  proposedActivities          WellnessActivity[]
+  activityVotes               WellnessActivityVote[]
+  chatMessages                ChatMessage[]
+  communityPosts              CommunityPost[]
+  communityReplies            CommunityReply[]
+
+  @@index([officeBranch, userRole])
+  @@map("users")
+}
+
+// Partitioned by RANGE (recorded_date) in PostgreSQL for 100,000+ users syncing every 15 mins
+model HealthTelemetrySample {
+  id               String   @id @default(uuid())
+  userId           String   @map("user_id")
+  idempotencyKey   String   @map("idempotency_key")
+  recordedDate     DateTime @db.Date @map("recorded_date")
+  steps            Int
+  distanceKm       Float    @map("distance_km")
+  heartRateBpm     Int      @map("heart_rate_bpm")
+  restingBpm       Int      @map("resting_bpm")
+  stressScore      Int      @map("stress_score")
+  stressLabel      String   @map("stress_label")
+  sleepMinutes     Int      @map("sleep_minutes")
+  deepSleepMinutes Int      @map("deep_sleep_minutes")
+  remSleepMinutes  Int      @map("rem_sleep_minutes")
+  recoveryScore    Int      @map("recovery_score")
+  spo2Percentage   Int      @map("spo2_percentage")
+  activeCalories   Int      @map("active_calories")
+  sourceProvider   String   @map("source_provider")
+  syncedAt         DateTime @default(now()) @map("synced_at")
+
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, idempotencyKey])
+  @@index([userId, recordedDate(sort: Desc)])
+  @@map("health_telemetry_samples")
+}
+
+model PrivacyConsentAuditLog {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  action      String
+  details     String
+  ipAddress   String?  @map("ip_address")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@map("privacy_consent_audit_logs")
+}
+
+model WellnessActivity {
+  id             String   @id @default(uuid())
+  title          String
+  description    String
+  suggestedTime  String   @map("suggested_time")
+  location       String
+  category       String
+  officeBranch   String   @map("office_branch")
+  proposedById   String   @map("proposed_by_id")
+  votesCount     Int      @default(0) @map("votes_count")
+  hrApproved     Boolean  @default(false) @map("hr_approved")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  proposedBy     User     @relation(fields: [proposedById], references: [id])
+  votes          WellnessActivityVote[]
+
+  @@index([officeBranch, votesCount(sort: Desc)])
+  @@map("wellness_activities")
+}
+
+model WellnessActivityVote {
+  id          String   @id @default(uuid())
+  activityId  String   @map("activity_id")
+  userId      String   @map("user_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  activity    WellnessActivity @relation(fields: [activityId], references: [id], onDelete: Cascade)
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Strictly enforces 1 vote per user per activity at the database constraint level
+  @@unique([activityId, userId])
+  @@map("wellness_activity_votes")
+}
+
+model WalkingCompetition {
+  id                 String   @id @default(uuid())
+  title              String
+  officeBranch       String   @map("office_branch")
+  prizeBadge         String   @map("prize_badge")
+  startTime          DateTime @map("start_time")
+  endTime            DateTime @map("end_time")
+  isEnded            Boolean  @default(false) @map("is_ended")
+  winnerEmployeeId   String?  @map("winner_employee_id")
+  winnerEmployeeName String?  @map("winner_employee_name")
+  winnerSteps        Int?     @map("winner_steps")
+  createdAt          DateTime @default(now()) @map("created_at")
+
+  @@index([officeBranch, isEnded, endTime])
+  @@map("walking_competitions")
+}
+
+model ChatRoom {
+  id           String   @id @default(uuid())
+  name         String
+  type         String   // OFFICE_GROUP | INTER_OFFICE_GROUP | DIRECT_MESSAGE
+  officeBranch String?  @map("office_branch")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  messages     ChatMessage[]
+
+  @@map("chat_rooms")
+}
+
+model ChatMessage {
+  id           String   @id @default(uuid())
+  roomId       String   @map("room_id")
+  senderId     String   @map("sender_id")
+  text         String
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  room         ChatRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  sender       User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  // Cursor-based pagination index
+  @@index([roomId, createdAt(sort: Desc), id])
+  @@map("chat_messages")
+}
+
+model CommunityPost {
+  id              String   @id @default(uuid())
+  kind            String   // WORK_DIFFICULTY | IDEA | PROFESSIONAL_TIP | NEED_HELP_QA
+  category        String
+  title           String
+  body            String
+  authorId        String   @map("author_id")
+  isAnonymous     Boolean  @default(false) @map("is_anonymous")
+  upvotes         Int      @default(0)
+  acceptedReplyId String?  @map("accepted_reply_id")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  author          User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  replies         CommunityReply[]
+
+  @@index([kind, createdAt(sort: Desc), id])
+  @@map("community_posts")
+}
+
+model CommunityReply {
+  id                 String   @id @default(uuid())
+  postId             String   @map("post_id")
+  authorId           String   @map("author_id")
+  content            String
+  upvotes            Int      @default(0)
+  isAcceptedSolution Boolean  @default(false) @map("is_accepted_solution")
+  createdAt          DateTime @default(now()) @map("created_at")
+
+  post               CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author             User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([postId, createdAt])
+  @@map("community_replies")
+}
+

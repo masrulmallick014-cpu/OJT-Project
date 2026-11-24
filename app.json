@@ -1,0 +1,55 @@
+{
+  "expo": {
+    "name": "PulseCorp",
+    "slug": "pulsecorp-wellness",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "scheme": "pulsecorp",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.pulsecorp.wellness",
+      "infoPlist": {
+        "NSHealthShareUsageDescription": "PulseCorp reads your verified Apple Health biometric data (Steps, Heart Rate, Active Calories, Sleep, and SpO2) to calculate your daily Employee Wellness Score, Readiness Index, and corporate challenge rankings.",
+        "NSHealthUpdateUsageDescription": "PulseCorp synchronizes active corporate challenge milestones and wellness achievements with Apple Health."
+      },
+      "entitlements": {
+        "com.apple.developer.healthkit": true,
+        "com.apple.developer.healthkit.access": []
+      }
+    },
+    "android": {
+      "package": "com.pulsecorp.wellness",
+      "permissions": [
+        "android.permission.VIBRATE",
+        "android.permission.ACTIVITY_RECOGNITION",
+        "android.permission.health.READ_STEPS",
+        "android.permission.health.READ_HEART_RATE",
+        "android.permission.health.READ_SLEEP",
+        "android.permission.health.READ_ACTIVE_CALORIES_BURNED",
+        "android.permission.health.READ_OXYGEN_SATURATION"
+      ],
+      "intentFilters": [
+        {
+          "action": "androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE",
+          "category": [
+            "android.intent.category.DEFAULT"
+          ]
+        },
+        {
+          "action": "android.permission.health.START_ONBOARDING",
+          "category": [
+            "android.intent.category.DEFAULT"
+          ]
+        }
+      ]
+    },
+    "web": {
+      "bundler": "metro",
+      "backgroundColor": "#0F172A"
+    },
+    "plugins": [
+      "./plugins/withHealthConnectRationale.js"
+    ]
+  }
+}
