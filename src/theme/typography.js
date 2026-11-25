@@ -1,0 +1,36 @@
+export const typography = {
+    sizes: {
+        hero: 34,
+        h1: 28,
+        h2: 24,
+        h3: 20,
+        h4: 18,
+        bodyLarge: 16,
+        body: 14,
+        caption: 12,
+        micro: 10,
+    },
+    weights: {
+        regular: '400',
+        medium: '500',
+        semibold: '600',
+        bold: '700',
+        heavy: '800',
+    },
+    lineHeights: {
+        hero: 42,
+        h1: 34,
+        h2: 30,
+        h3: 26,
+        h4: 24,
+        bodyLarge: 22,
+        body: 20,
+        caption: 16,
+    },
+    letterSpacing: {
+        tight: -0.5,
+        normal: 0,
+        wide: 0.5,
+        wider: 1.0,
+    },
+};

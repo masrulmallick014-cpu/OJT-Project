@@ -6,10 +6,8 @@
 
 let withAndroidManifest;
 try {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
   withAndroidManifest = require('@expo/config-plugins').withAndroidManifest;
 } catch (e) {
-  // Graceful fallback for non-prebuild / standalone tooling environments
   withAndroidManifest = (config, fn) => config;
 }
 
@@ -27,17 +25,21 @@ const withHealthConnectRationale = (config) => {
       return manifestConfig;
     }
 
-    // 1. Ensure uses-permission declarations exist
+    // Enforce allowBackup="false" so sensitive local health metrics are not uploaded to unencrypted cloud backups
+    if (mainApplication.$) {
+      mainApplication.$['android:allowBackup'] = 'false';
+    }
+
     if (!manifest['uses-permission']) {
       manifest['uses-permission'] = [];
     }
 
+    // Minimal required permissions only (removed unused READ_OXYGEN_SATURATION, SYSTEM_ALERT_WINDOW, and legacy external storage permissions)
     const requiredPermissions = [
       'android.permission.health.READ_STEPS',
       'android.permission.health.READ_HEART_RATE',
       'android.permission.health.READ_SLEEP',
       'android.permission.health.READ_ACTIVE_CALORIES_BURNED',
-      'android.permission.health.READ_OXYGEN_SATURATION',
       'android.permission.ACTIVITY_RECOGNITION',
     ];
 
@@ -52,7 +54,6 @@ const withHealthConnectRationale = (config) => {
       }
     });
 
-    // 2. Find MainActivity to attach intent filters
     const mainActivity = mainApplication.activity?.find(
       (a) => a.$?.['android:name'] === '.MainActivity'
     );
@@ -62,7 +63,6 @@ const withHealthConnectRationale = (config) => {
         mainActivity['intent-filter'] = [];
       }
 
-      // Add ACTION_SHOW_PERMISSIONS_RATIONALE intent-filter
       const hasRationaleFilter = mainActivity['intent-filter'].some((filter) =>
         filter.action?.some(
           (act) => act.$?.['android:name'] === 'androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE'
@@ -88,7 +88,6 @@ const withHealthConnectRationale = (config) => {
         });
       }
 
-      // Add START_ONBOARDING intent-filter
       const hasOnboardingFilter = mainActivity['intent-filter'].some((filter) =>
         filter.action?.some(
           (act) => act.$?.['android:name'] === 'android.permission.health.START_ONBOARDING'
@@ -115,7 +114,6 @@ const withHealthConnectRationale = (config) => {
       }
     }
 
-    // 3. Android 14 Activity Alias for Health Connect Permission Usage
     if (!mainApplication['activity-alias']) {
       mainApplication['activity-alias'] = [];
     }
@@ -159,4 +157,3 @@ const withHealthConnectRationale = (config) => {
 };
 
 module.exports = withHealthConnectRationale;
-

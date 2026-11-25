@@ -1,100 +1,59 @@
-8# PulseCorp — Enterprise Mobile Wellness Architecture
+# PulseCorp — Workplace Wellness App (React Native + Expo + JavaScript)
 
-Production-grade, store-ready Corporate Wellness mobile application built with **React Native (Expo SDK 51+)** and **TypeScript**, engineered for deployment to Google Play Store and Apple App Store.
-
----
-
-## 🏛️ Architectural Overview
-
-PulseCorp employs a **Feature-Driven & Hybrid Adapter Architecture** designed for high scalability, fault tolerance, and multi-platform biometric synchronization.
-
-```
-pulsecorp/
-├── App.tsx                               # Application Root & Wellness Provider
-├── app.json                              # App Store & Health Connect Manifest
-├── package.json                          # Dependencies & EAS Scripts
-├── tsconfig.json                         # Strict Type Paths
-└── src/
-    ├── theme/                            # Motivational Dark-Mode Design System
-    │   ├── colors.ts                     # #0F172A slate, #1E293B surface, #10B981 emerald, #06B6D4 cyan
-    │   ├── typography.ts                 # Executive typography scales
-    │   └── index.ts                      # Theme barrel export & shadows
-    ├── types/                            # Strict Domain Interfaces
-    │   └── index.ts                      # HealthMetrics, EmployeeProfile, WearableDevice, MotivationalQuote
-    ├── constants/                        # Curated Libraries
-    │   └── quotesLibrary.ts              # 150+ Curated High-Performance Quotes & Category Mappings
-    ├── services/                         # Hybrid Health Adapter Layer
-    │   └── healthService.ts              # Android Health Connect & iOS Apple HealthKit + Live Telemetry Sim
-    ├── context/                          # Global State & Persistence
-    │   └── WellnessContext.tsx           # Multi-Stage Sync Engine with AsyncStorage Persistence
-    ├── components/common/                # Reusable Design System Primitives
-    │   ├── Badge.tsx                     # Tier, Readiness, and Status Pills
-    │   ├── Card.tsx                      # Slate Surface Container
-    │   ├── Icon.tsx                      # Built-in SVG Icon System (No missing native glyphs)
-    │   └── ProgressRing.tsx              # SVG Animated Circular Telemetry Rings
-    ├── features/                         # Core Business Verticals
-    │   ├── gate/                         # Launch Experience
-    │   │   └── MotivationalGateScreen.tsx# Daily Gate, Animated Flame Streak, 150+ Quotes, Haptics
-    │   ├── dashboard/                    # Real-Time Telemetry Hub
-    │   │   └── DashboardScreen.tsx       # Steps (10k Goal), HR, Calories, Sleep, SpO2, Wearable Hub
-    │   ├── challenges/                   # Corporate Social
-    │   │   └── ChallengesScreen.tsx      # Cross-departmental leaderboards & Q4 Mobility Sprint
-    │   └── settings/                     # App Store & Health Connect Compliance
-    │       └── SettingsScreen.tsx        # Privacy Policy Rationale, Dept Switcher, QA Tools
-    └── navigation/
-        └── RootNavigator.tsx             # Motivational Gate Controller & Bottom Tab Navigator
-```
+PulseCorp is a workplace wellness application built with **React Native (Expo)** and **JavaScript (`.js`)**. It focuses on helping people complete simple, positive daily wellness actions—such as logging hydration, taking a 2-minute breathing break, and joining opt-in team step challenges—with clear privacy controls.
 
 ---
 
-## ⚡ Core Features
+## 🧭 App Flow & Navigation
 
-### 1. Daily Motivational Gate (Launch Experience)
-- Every session initiates with a high-impact full-screen gate before dashboard entry.
-- **150+ Curated Quotes** across *Discipline, Resilience, Leadership, Peak Energy, and Stoic Focus*.
-- **Animated Daily Streak Counter** with pulse animation and departmental ranking tier.
-- **Dynamic Readiness Index Badge** derived from sleep recovery and resting heart rate.
-- **Haptic-Feedback CTA**: `"LOCK IN & ENTER DASHBOARD"` triggering immediate telemetry synchronization.
+```
+index.js → App.js → WellnessProvider → RootNavigator → Active Screen
+```
 
-### 2. Hybrid Health Adapter Layer (`src/services/healthService.ts`)
-- **Android Integration**: Native Google Health Connect (`react-native-health-connect`) permissions for:
-  - `READ_STEPS`
-  - `READ_HEART_RATE`
-  - `READ_SLEEP`
-  - `READ_ACTIVE_CALORIES_BURNED`
-  - `READ_OXYGEN_SATURATION`
-- **iOS Integration**: Apple HealthKit (`react-native-health`) with `NSHealthShareUsageDescription`.
-- **Zero-Crash Development Fallback**: Automatic `USE_NATIVE_HEALTH_API` toggle. In Expo Go/web previews, gracefully switches to a realistic live-fluctuating telemetry simulator.
+### 1. Transparent 3-Step Onboarding
+1. **Step 1 — Health Access (`HealthPermissionsScreen.js`)**: Explains in plain English why each permission is requested and what data is read. Never triggers OS permission dialogs automatically on screen mount, and allows skipping permissions to use manual logging.
+2. **Step 2 — Profile & Body Info (`OnboardingScreen.js`)**: Collects height, weight, and gender to estimate stride length and resting energy locally on the device.
+3. **Step 3 — Company Workspace (`CompanyVerificationScreen.js`)**: Lets the user select their company workspace and optionally attach an ID card image (`UNDER_REVIEW` status pending HR review). Does not use synthetic OCR stuffing or fake auto-verification badges.
 
-### 3. Real-Time Telemetry Grid
-- **Daily Steps**: Real-time progress against the 10,000 Corporate Benchmark with SVG progress rings and distance estimation.
-- **Heart Rate**: Current BPM, Resting BPM, and Zone indicators (*Rest, Fat Burn, Cardio, Peak*).
-- **Active Calories Burned**: Calculated caloric expenditure with metabolic pace tracking.
-- **Sleep & Recovery**: Deep sleep, REM breakdown, and physiological recovery score (0–100%).
-- **Blood Oxygen & Stress**: SpO2 saturation (%) and HRV autonomic vagal nerve stress index.
+### 2. Four-Destination Bottom Navigation (`RootNavigator.js`)
+- **Home (`HomeScreen.js`)**: One primary daily step goal at the top, three quick actions (*Log water (+250 ml)*, *Start 2-minute breathing*, *Join a walk*), honest personal health readings (*No reading yet* / *Permission needed* / *Last updated*), and a compact Team Updates summary.
+- **Move (`ChallengesScreen.js` + `MindfulScreen.js`)**: Contains three sub-tabs:
+  - **Challenges**: Opt-in team step challenges and workspace leaderboard.
+  - **Calm**: 2-minute 4-4-4 guided box breathing timer.
+  - **Office Activities**: Propose and vote on opt-in team wellness breaks.
+- **Community (`CommunityScreen.js` + `src/features/social/*`)**:
+  - **Feed (`FeedScreen.js`)**: Recent updates, wellness wins, coworker connection cards (`CrossCompanyCarousel.js`), and a finite *"You’re all caught up"* footer (no endless scroll). Seeded items and sample profiles are clearly labeled as **Demo**.
+  - **Team Chats**: Local demo office chat rooms and 1-on-1 messages.
+  - **Support & Ideas**: Workplace support board with an anonymous posting option.
+  - **Work Tips**: Practical tips and Q&A sorted by category.
+- **Profile (`SettingsScreen.js`)**:
+  - Explicit **Share Health Data with HR** opt-in toggle (defaults to `false`).
+  - Notification & reminder controls.
+  - Client-side HR role & consent privacy check demonstration.
+  - Collapsible **Technical & Sensor Diagnostics** drawer (collapsed by default).
 
-### 4. App Store & Google Play Store Compliance
-- **Google Health Connect Intent Filter**:
-  Configured in `app.json` for `androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE` required by Google Play Store health policies.
-- **Transparent Privacy Disclosures**:
-  In-app disclosure screen certifying biometric data is encrypted at rest (AES-256) and never transferred to third-party data brokers or advertising platforms.
+---
+
+## 🔒 What Runs Locally vs. What Is Demo/Stubbed
+
+- **On-Device / Real Native APIs**:
+  - `AsyncStorage` persistence for user profile, onboarding steps, hydration logs, workout logs, and privacy/notification settings.
+  - `expo-sensors` (`Pedometer` and `Accelerometer`) when running on a physical device after the user taps *Grant Health Permissions*.
+  - `react-native-health-connect` bridge on Android (`src/services/healthConnect.android.js`) when Health Connect is installed and authorized.
+  - `expo-image-picker` for selecting a local ID card photo.
+- **Local In-Memory Demo Helpers (Not Deployed Cloud Services)**:
+  - `src/services/apiClient.js` & `backend/src/server.js`: Client-side in-memory leaderboard sorting and HR consent check helpers.
+  - `src/lib/supabase.js`: Local in-memory store for seeded community posts, sample coworker profiles, connection requests, and demo chat auto-replies.
+  - `src/services/companyService.js`: Local workspace directory and local image dimension check (marks uploaded IDs as `UNDER_REVIEW`).
 
 ---
 
 ## 🚀 Running the Project
 
-### Development (Expo Go / Web / Simulator)
 ```bash
 # 1. Install dependencies
 npm install
 
 # 2. Start the Expo development server
 npx expo start
-```
-
-### Production Native Build (EAS Build)
-To compile native Health Connect and HealthKit binaries:
-```bash
-# Set USE_NATIVE_HEALTH_API = true in src/services/healthService.ts
-eas build --profile development --platform all
 ```

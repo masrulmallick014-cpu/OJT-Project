@@ -1,1 +1,41 @@
-node_modules
+# Dependencies
+node_modules/
+
+# Expo & Metro
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Environment variables & secrets (Never commit real .env files)
+.env
+.env.local
+.env.development
+.env.production
+.env.test
+!.env.example
+
+# Android build outputs & local configuration
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/keystore.properties
+
+# Signing keys & credentials (keep debug.keystore only for local dev)
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.keystore
+!android/app/debug.keystore
+google-services.json
+GoogleService-Info.plist
+
+# Logs & OS files
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+.DS_Store
+Thumbs.db
